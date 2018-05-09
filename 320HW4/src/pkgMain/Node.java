@@ -1,7 +1,6 @@
 package pkgMain;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class Node {
@@ -11,7 +10,6 @@ public class Node {
 	int distance = Integer.MAX_VALUE;
 	boolean visited = false;
 	Map<Node, Edge> adjacent_nodes = new HashMap<>();
-	LinkedList<Node> shortest_path = new LinkedList<>();
 	Node parent;
 	int jumps = 0;
 	

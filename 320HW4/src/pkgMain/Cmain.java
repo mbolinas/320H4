@@ -1,3 +1,11 @@
+/*
+ * @Marc Bolinas
+ * 5/8/18
+ * CISC320
+ * HW4
+ */
+
+
 package pkgMain;
 
 import java.io.BufferedReader;
@@ -8,12 +16,14 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Stack;
 
 public class Cmain {
 	
 	final static String input = "K:\\Downloads\\input.txt";
 	final static String output = "K:\\Downloads\\output.txt";
+	
+	//These are global variables that hold the avg awkwardness
+	//Ideally there wouldn't be global variables, but then I would have to update the return types of all my functions
 	static double heur1;
 	static double heur2;
 	static double p4;
@@ -38,12 +48,14 @@ public class Cmain {
 			int f = Integer.parseInt(info[1]);
 			int m = Integer.parseInt(info[2]);
 			int a = Integer.parseInt(info[3]);
-			Graph g = new Graph();
 			
+			//Create graph
+			Graph g = new Graph();
 			for(int i = 1; i <= n; i++) {
 				g.add(new Node(i));
 			}
 			
+			//Populate graph with nodes
 			while(f > 0) {
 				line = reader.readLine();
 				String[] pair = line.split(" ");
@@ -54,6 +66,7 @@ public class Cmain {
 				f--;
 			}
 			
+			//Call part1 and part2 only
 			if(a == 1) {
 				line = reader.readLine();
 				
@@ -65,6 +78,7 @@ public class Cmain {
 				writer.write("Part 2 answer: " + part2(l, g));
 				writer.newLine();
 			}
+			//Call part5 only
 			else if(m == 0) {
 				LinkedList<Node> l = part5(0, g);
 				writer.write("Part 5 answer: " + p5);
@@ -76,6 +90,7 @@ public class Cmain {
 				writer.write(s);
 				writer.newLine();
 			}
+			//Call part2 only
 			else if (a == m) {
 				LinkedList<Node> l = new LinkedList<>();
 				while(a > 0) {
@@ -86,6 +101,7 @@ public class Cmain {
 				writer.write("Part 2 answer: " + part2(l, g));
 				writer.newLine();
 			}
+			//Call part3, which calls the heuristics, and part4
 			else if(a == 0 && m != 0) {
 				String ans = part3(m, g);
 				writer.write("Heuristic 1 answer: " + heur1);
@@ -144,6 +160,7 @@ public class Cmain {
 		host.distance = 0;
 		host.visited = true;
 		
+		//Standard BFS
 		Queue<Node> queue = new LinkedList<>();
 		queue.add(host);
 		
@@ -151,8 +168,6 @@ public class Cmain {
 			count++;
 			Node current_node = queue.poll();
 			total_weight = total_weight + current_node.distance;
-			//System.out.println(current_node.name);
-			
 			for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 				if(adjacency_pair.getKey().visited == false) {
 					adjacency_pair.getKey().visited = true;
@@ -161,59 +176,41 @@ public class Cmain {
 				}
 			}
 		}
-		//System.out.println(total_weight);
-		//System.out.println(count);
-		count--;
+		count--;	//don't count the host
 		return total_weight / count;
-		//System.out.println("Part 1: average awkwardness from host '" + host.name + "' = " + total_weight/count);
 	}
 	
 	public static double part2(LinkedList<Node> hosts, Graph g) {
-		int count = 0;
-		int total_weight = 0;
 		for(Node host : hosts) {
-			reset(g);
-			
-			if(host.distance < Integer.MAX_VALUE) {
-				//total_weight = total_weight - host.distance;
-			}
+			reset(g);	//reset all "visited" to false, so that we can rerun our algorithm
 			host.distance = 0;
 			host.visited = true;
 			
+			//Perform BFS for each host, updating distance if 'adding' a new host causes the distance to decrease
 			Queue<Node> queue = new LinkedList<>();
 			queue.add(host);
 			
 			while(queue.size() > 0) {
-				count++;
 				Node current_node = queue.poll();
-				//total_weight = total_weight + current_node.distance;
-				//System.out.println("current node " + current_node.name + " node weight " + current_node.distance);
-				//System.out.println("total weight " + total_weight);
 				
 				for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 					if(adjacency_pair.getKey().visited == false) {
 						adjacency_pair.getKey().visited = true;
 						if(current_node.distance + 1 < adjacency_pair.getKey().distance) {
-							//System.out.println("changing weight from " + adjacency_pair.getKey().distance + " to " + (current_node.distance + 1));
-							if(adjacency_pair.getKey().distance < Integer.MAX_VALUE) {
-								//total_weight = total_weight - (adjacency_pair.getKey().distance - (current_node.distance + 1));
-							}
 							adjacency_pair.getKey().distance = current_node.distance + 1;
 						}
-						//adjacency_pair.getKey().distance = Math.min(current_node.distance + 1, adjacency_pair.getKey().distance);
 						queue.add(adjacency_pair.getKey());
 					}
 				}
 			}
 			
 		}
-		return awkwardness(hosts.getFirst(), hosts.size());
 		
-		//System.out.println("count = " + count);
-		//System.out.println("total weight = " + total_weight);
+		return calculate_avg(hosts.getFirst(), hosts.size());
 	}
-	
-	public static double awkwardness(Node host, int size) {
+	//A helper function, general BFS based off of part1
+	//part1 could not be simply called because of how 'count' was calculated (it would require passing in count as another variable)
+	public static double calculate_avg(Node host, int size) {
 		int count = 0;
 		double total_weight = 0;
 		host.distance = 0;
@@ -226,39 +223,36 @@ public class Cmain {
 			count++;
 			Node current_node = queue.poll();
 			total_weight = total_weight + current_node.distance;
-			//System.out.println(current_node.name);
 			
 			for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 				if(adjacency_pair.getKey().visited == true) {
 					adjacency_pair.getKey().visited = false;
-					//adjacency_pair.getKey().distance = current_node.distance + 1;
 					queue.add(adjacency_pair.getKey());
 				}
 			}
 		}
 		count--;
 		count = count - size;
-		//System.out.println("total weight = " + total_weight);
 		return total_weight / count;
-		//System.out.println("Part 2: average awkwardness with multiple hosts = " + total_weight / count);
 	}
-
+	//calls both heuristic1 and heuristic2, because of it's nature of having to call and return values from 2 separate functions it's a bit of a mess
 	public static String part3(int hosts, Graph g) {
 		LinkedList<Node> lists = heuristic1(hosts, g);
 		heur1 = part2(lists, g);
-		String h = "";
+		String result_hosts = "";
 		for(Node n : lists) {
-			h = h + n.name + " ";
+			result_hosts = result_hosts + n.name + " ";
 		}
-		h = h + "x";
+		result_hosts = result_hosts + "x";
+		
 		full_reset(g);
 		
 		lists = heuristic2(hosts, g);
 		heur2 = part2(lists, g);
 		for(Node n : lists) {
-			h = h + n.name + " ";
+			result_hosts = result_hosts + n.name + " ";
 		}
-		return h;
+		return result_hosts;
 	}
 	
 	
@@ -266,6 +260,7 @@ public class Cmain {
 		LinkedList<Node> list = new LinkedList<>();
 		Node current_node = null;
 		while(hosts > 0) {
+			//for each node, find the biggest one, that's the one to add to the hosts
 			for(Node n : g.nodes) {
 				if(current_node == null || n.adjacent_nodes.size() >= current_node.adjacent_nodes.size()) {
 					if(current_node == null && n.visited == false) {
@@ -292,6 +287,7 @@ public class Cmain {
 	}
 	
 	public static LinkedList<Node> heuristic2(int hosts, Graph g) {
+		//Start by picking the node with the most friends
 		Node host = heuristic1(1, g).getFirst();
 		hosts--;
 		host.visited = false;
@@ -299,7 +295,8 @@ public class Cmain {
 		LinkedList<Node> list = new LinkedList<>();
 		list.add(host);
 		
-		
+		//Then find the node that has the highest distance, add that to the list
+		//Then recalculate distances again, repeat
 		while(hosts > 0) {
 			Node potential_host = host;
 			host.distance = 0;
@@ -310,16 +307,11 @@ public class Cmain {
 			
 			while(queue.size() > 0) {
 				Node current_node = queue.poll();
-				//System.out.println(current_node.name);
 				
 				for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 					if(adjacency_pair.getKey().visited == false) {
 						adjacency_pair.getKey().visited = true;
 						if(current_node.distance + 1 < adjacency_pair.getKey().distance) {
-							//System.out.println("changing weight from " + adjacency_pair.getKey().distance + " to " + (current_node.distance + 1));
-							if(adjacency_pair.getKey().distance < Integer.MAX_VALUE) {
-								//total_weight = total_weight - (adjacency_pair.getKey().distance - (current_node.distance + 1));
-							}
 							adjacency_pair.getKey().distance = current_node.distance + 1;
 						}
 						queue.add(adjacency_pair.getKey());
@@ -343,7 +335,8 @@ public class Cmain {
 		return list;
 	}
 	
-	
+	//This heuristic is very similar to heuristic2, but instead of picking the node with the highest distance
+	//it finds the path to the node with the highest distance, then picks the node halfway between that path
 	public static LinkedList<Node> part4(int hosts, Graph g) {
 		Node host = heuristic1(1, g).getFirst();
 		hosts--;
@@ -355,8 +348,6 @@ public class Cmain {
 		
 		while(hosts > 0) {
 			Node potential_host = host;
-			//Stack<Node> stack = new Stack<>();
-			//stack.push(potential_host);
 			host.distance = 0;
 			host.visited = true;
 			host.jumps = 0;
@@ -366,38 +357,29 @@ public class Cmain {
 			
 			while(queue.size() > 0) {
 				Node current_node = queue.poll();
-				//System.out.println(current_node.name);
 				
 				for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 					if(adjacency_pair.getKey().visited == false) {
 						adjacency_pair.getKey().visited = true;
 						if(current_node.distance + 1 < adjacency_pair.getKey().distance) {
-							adjacency_pair.getKey().shortest_path = current_node.shortest_path;
-							adjacency_pair.getKey().shortest_path.add(current_node);
+							//parent and jumps keeps track of the path of nodes to the host, as well as how far they are
 							adjacency_pair.getKey().parent = current_node;
 							adjacency_pair.getKey().jumps = current_node.jumps + 1;
-							//System.out.println(adjacency_pair.getKey().name + " size: " + adjacency_pair.getKey().shortest_path.size());
 							adjacency_pair.getKey().distance = current_node.distance + 1;
 						}
 						queue.add(adjacency_pair.getKey());
 					}
 				}
 				if(current_node.distance > potential_host.distance) {
-					//stack.push(potential_host);
 					potential_host = current_node;
 				}
 			}
 			
-//			for(Node n : potential_host.shortest_path) {
-//				System.out.println("+" + n.name);
-//			}
-			
-			
+			//make potential_host the node halfway between host and the original potential_host
 			for(int i = potential_host.jumps / 2; i > 0; i--) {
 				potential_host = potential_host.parent;
 			}
 			
-			//potential_host = potential_host.shortest_path.get(potential_host.shortest_path.size() / 2);
 			list.add(potential_host);
 			hosts--;
 			host = potential_host;
@@ -405,26 +387,21 @@ public class Cmain {
 		}
 		full_reset(g);
 		p4 = part2(list, g);
-		//System.out.println("Part 4 : " + part2(list, g));
 		return list;
 	}
-	
+	//Very similar to part4 (as it was meant to be)
+	//Main differences are the big main loop is changed to p5 > 1, and p5 is updated after every iteration
 	public static LinkedList<Node> part5(int hosts, Graph g){
 		Node host = heuristic1(1, g).getFirst();
 		hosts--;
 		host.visited = false;
-		//System.out.println(host.name);
 		
 		LinkedList<Node> list = new LinkedList<>();
 		list.add(host);
 		p5 = part2(list, g);
 		reset(g);
 		while(p5 > 1) {
-			//System.out.println(list.size());
-			//System.out.println(p5);
 			Node potential_host = host;
-			//Stack<Node> stack = new Stack<>();
-			//stack.push(potential_host);
 			host.distance = 0;
 			host.visited = true;
 			host.jumps = 0;
@@ -434,31 +411,22 @@ public class Cmain {
 			
 			while(queue.size() > 0) {
 				Node current_node = queue.poll();
-				//System.out.println(current_node.name);
 				
 				for(Entry <Node, Edge> adjacency_pair : current_node.adjacent_nodes.entrySet()) {
 					if(adjacency_pair.getKey().visited == false) {
 						adjacency_pair.getKey().visited = true;
 						if(current_node.distance + 1 < adjacency_pair.getKey().distance) {
-							adjacency_pair.getKey().shortest_path = current_node.shortest_path;
-							adjacency_pair.getKey().shortest_path.add(current_node);
 							adjacency_pair.getKey().parent = current_node;
 							adjacency_pair.getKey().jumps = current_node.jumps + 1;
-							//System.out.println(adjacency_pair.getKey().name + " size: " + adjacency_pair.getKey().shortest_path.size());
 							adjacency_pair.getKey().distance = current_node.distance + 1;
 						}
 						queue.add(adjacency_pair.getKey());
 					}
 				}
 				if(current_node.distance > potential_host.distance) {
-					//stack.push(potential_host);
 					potential_host = current_node;
 				}
 			}
-			
-//			for(Node n : potential_host.shortest_path) {
-//				System.out.println("+" + n.name);
-//			}
 			
 			System.out.println(potential_host.name);
 			for(int i = potential_host.jumps / 2; i > 0; i--) {
@@ -466,7 +434,6 @@ public class Cmain {
 				potential_host = potential_host.parent;
 			}
 			
-			//potential_host = potential_host.shortest_path.get(potential_host.shortest_path.size() / 2);
 			list.add(potential_host);
 			hosts--;
 			host = potential_host;
@@ -476,7 +443,6 @@ public class Cmain {
 		}
 		full_reset(g);
 		p5 = part2(list, g);
-		//System.out.println("Part 4 : " + part2(list, g));
 		return list;
 	}
 	
